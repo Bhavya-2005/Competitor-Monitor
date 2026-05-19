@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Competitor Monitoring Agent API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: competitors
+    description: Competitor management
+  - name: checks
+    description: Monitoring checks
+  - name: digests
+    description: Daily Slack digests
+  - name: settings
+    description: App settings
+  - name: dashboard
+    description: Dashboard summaries
 paths:
   /healthz:
     get:
@@ -24,6 +34,264 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /competitors:
+    get:
+      operationId: listCompetitors
+      tags: [competitors]
+      summary: List all competitors
+      responses:
+        "200":
+          description: List of competitors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Competitor"
+    post:
+      operationId: createCompetitor
+      tags: [competitors]
+      summary: Add a new competitor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompetitorInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Competitor"
+
+  /competitors/{id}:
+    get:
+      operationId: getCompetitor
+      tags: [competitors]
+      summary: Get a competitor by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Competitor found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Competitor"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCompetitor
+      tags: [competitors]
+      summary: Update a competitor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompetitorUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Competitor"
+    delete:
+      operationId: deleteCompetitor
+      tags: [competitors]
+      summary: Delete a competitor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /competitors/{id}/checks:
+    get:
+      operationId: listCompetitorChecks
+      tags: [checks]
+      summary: List check results for a competitor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Check results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Check"
+
+  /competitors/{id}/run-check:
+    post:
+      operationId: runCheck
+      tags: [checks]
+      summary: Manually trigger a competitor check
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Check queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+
+  /checks:
+    get:
+      operationId: listChecks
+      tags: [checks]
+      summary: List all recent checks across all competitors
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: All recent checks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Check"
+
+  /digests:
+    get:
+      operationId: listDigests
+      tags: [digests]
+      summary: List all sent digests
+      responses:
+        "200":
+          description: Digests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Digest"
+    post:
+      operationId: sendDigest
+      tags: [digests]
+      summary: Manually send a digest to Slack
+      responses:
+        "202":
+          description: Digest sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Digest"
+
+  /digests/{id}:
+    get:
+      operationId: getDigest
+      tags: [digests]
+      summary: Get a specific digest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Digest found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Digest"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get app settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update app settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [dashboard]
+      summary: Get recent activity feed across all competitors
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activity items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +302,211 @@ components:
       required:
         - status
 
+    Competitor:
+      type: object
+      required: [id, name, url, monitorPricing, monitorFeatures, monitorBlog, monitorJobs, isActive, createdAt, lastCheckedAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        url:
+          type: string
+        description:
+          type: ["string", "null"]
+        faviconUrl:
+          type: ["string", "null"]
+        monitorPricing:
+          type: boolean
+        monitorFeatures:
+          type: boolean
+        monitorBlog:
+          type: boolean
+        monitorJobs:
+          type: boolean
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+        lastCheckedAt:
+          type: ["string", "null"]
+        checksCount:
+          type: ["integer", "null"]
+        changesCount:
+          type: ["integer", "null"]
+
+    CompetitorInput:
+      type: object
+      required: [name, url]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        monitorPricing:
+          type: boolean
+        monitorFeatures:
+          type: boolean
+        monitorBlog:
+          type: boolean
+        monitorJobs:
+          type: boolean
+
+    CompetitorUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        url:
+          type: string
+        description:
+          type: string
+        monitorPricing:
+          type: boolean
+        monitorFeatures:
+          type: boolean
+        monitorBlog:
+          type: boolean
+        monitorJobs:
+          type: boolean
+        isActive:
+          type: boolean
+
+    Check:
+      type: object
+      required: [id, competitorId, competitorName, status, checkedAt, changeType, hasChanges]
+      properties:
+        id:
+          type: integer
+        competitorId:
+          type: integer
+        competitorName:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        checkedAt:
+          type: string
+        hasChanges:
+          type: boolean
+        changeType:
+          type: ["string", "null"]
+          enum: [pricing, features, blog, jobs, null]
+        summary:
+          type: ["string", "null"]
+        details:
+          type: ["string", "null"]
+        errorMessage:
+          type: ["string", "null"]
+
+    Digest:
+      type: object
+      required: [id, sentAt, status, competitorsChecked, changesFound]
+      properties:
+        id:
+          type: integer
+        sentAt:
+          type: string
+        status:
+          type: string
+          enum: [sent, failed, skipped]
+        competitorsChecked:
+          type: integer
+        changesFound:
+          type: integer
+        slackMessageId:
+          type: ["string", "null"]
+        content:
+          type: ["string", "null"]
+
+    Settings:
+      type: object
+      required: [id, slackWebhookConfigured, digestSchedule, digestTime, isDigestEnabled]
+      properties:
+        id:
+          type: integer
+        slackWebhookConfigured:
+          type: boolean
+        digestSchedule:
+          type: string
+          enum: [daily, weekly]
+        digestTime:
+          type: string
+        isDigestEnabled:
+          type: boolean
+        timezone:
+          type: string
+
+    SettingsUpdate:
+      type: object
+      properties:
+        slackWebhookUrl:
+          type: string
+        digestSchedule:
+          type: string
+          enum: [daily, weekly]
+        digestTime:
+          type: string
+        isDigestEnabled:
+          type: boolean
+        timezone:
+          type: string
+
+    DashboardSummary:
+      type: object
+      required: [totalCompetitors, activeCompetitors, totalChecks, checksToday, totalChanges, changesThisWeek, lastDigestSentAt, digestsThisMonth]
+      properties:
+        totalCompetitors:
+          type: integer
+        activeCompetitors:
+          type: integer
+        totalChecks:
+          type: integer
+        checksToday:
+          type: integer
+        totalChanges:
+          type: integer
+        changesThisWeek:
+          type: integer
+        lastDigestSentAt:
+          type: ["string", "null"]
+        digestsThisMonth:
+          type: integer
+        changesByType:
+          type: object
+          properties:
+            pricing:
+              type: integer
+            features:
+              type: integer
+            blog:
+              type: integer
+            jobs:
+              type: integer
+
+    ActivityItem:
+      type: object
+      required: [id, competitorId, competitorName, changeType, summary, detectedAt]
+      properties:
+        id:
+          type: integer
+        competitorId:
+          type: integer
+        competitorName:
+          type: string
+        competitorUrl:
+          type: string
+        changeType:
+          type: string
+          enum: [pricing, features, blog, jobs]
+        summary:
+          type: string
+        details:
+          type: ["string", "null"]
+        detectedAt:
+          type: string

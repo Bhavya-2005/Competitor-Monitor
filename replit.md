@@ -1,10 +1,11 @@
-# [Project name]
+# Competitor Monitor
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An AI-powered competitor monitoring dashboard that tracks rivals' websites daily — detecting pricing changes, new features, blog posts, and job listings — and delivers a morning Slack digest.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/competitor-monitor run dev` — run the frontend (port 25318)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,6 +15,7 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite + Tailwind (dark cockpit theme)
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
@@ -22,15 +24,29 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — OpenAPI contract (source of truth)
+- `lib/db/src/schema/` — competitors, checks, digests, settings tables
+- `artifacts/api-server/src/routes/` — competitors, checks, digests, dashboard, settings
+- `artifacts/api-server/src/lib/scraper.ts` — AI-powered web scraping (OpenRouter/OpenAI)
+- `artifacts/api-server/src/lib/slack.ts` — Slack webhook integration
+- `artifacts/api-server/src/lib/scheduler.ts` — hourly cron for daily checks
+- `artifacts/competitor-monitor/src/` — React frontend with wouter routing
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- OpenAPI-first: all types generated via Orval from `lib/api-spec/openapi.yaml`
+- Scraping uses fetch + AI analysis (OpenRouter gpt-4o-mini) for intelligent change detection
+- Falls back to simulated checks when no OPENAI_API_KEY/OPENROUTER_API_KEY is set
+- Slack digests use incoming webhooks — no OAuth required, just a webhook URL
+- Scheduler runs every hour, fires checks at the configured digest time (UTC)
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Dashboard** — Command Center with live stats, change distribution breakdown, recent intelligence feed
+- **Competitors** — Add/edit/delete tracked websites, configure which categories to monitor per competitor
+- **All Checks** — Full timeline feed of every check run across all competitors
+- **Digests** — History of Slack digests with content previews, manual send button
+- **Settings** — Slack webhook URL, digest schedule (daily/weekly), time, timezone
 
 ## User preferences
 
@@ -38,7 +54,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Set `OPENAI_API_KEY` or `OPENROUTER_API_KEY` for real AI-powered analysis; without it, checks simulate results
+- Slack digests show as "skipped" until a webhook URL is configured in Settings and digest is enabled
+- Google Fonts @import must be the FIRST line in `index.css` — before `@import "tailwindcss"`
+- Always run `pnpm run typecheck:libs` after adding new schema files before typechecking api-server
 
 ## Pointers
 
