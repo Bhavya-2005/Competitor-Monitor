@@ -1,0 +1,122 @@
+Build a production-ready full-stack AI Competitor Monitoring SaaS platform called "Competitor Watcher".
+
+Tech Stack:
+
+* React.js + Tailwind CSS frontend
+* Node.js + Express backend
+* PostgreSQL database
+* LangChain AI agents
+* Playwright web scraping
+* JWT authentication
+* Slack integration
+* Real-time dashboard with Socket.io
+* Dark futuristic glassmorphism UI
+* Responsive mobile-first design
+
+Features Required:
+
+AUTH:
+
+* Login
+* Signup
+* Forgot password
+* JWT auth
+* Google OAuth
+* GitHub OAuth
+* Role-based access control
+* Session persistence
+
+USER DASHBOARD:
+
+* Add competitors
+* Monitor websites
+* AI-generated summaries
+* Pricing change detection
+* Blog tracking
+* Hiring alerts
+* Slack notifications
+* Analytics charts
+* Weekly reports
+* Activity timeline
+
+ADMIN PANEL:
+
+* Manage users
+* View scraping logs
+* API usage analytics
+* Subscription management
+* Global monitoring controls
+* Error tracking
+* AI token usage tracking
+* Manage plans
+
+DEVELOPER PANEL:
+
+* LangChain execution logs
+* Playwright monitoring
+* Failed scrape queue
+* Cron status
+* Database monitoring
+* API diagnostics
+* Live console
+
+SCRAPING ENGINE:
+
+* Daily scheduled monitoring
+* Snapshot storage
+* Diff detection
+* Screenshot comparison
+* AI summarization
+* Website content parsing
+* Change history tracking
+
+UI REQUIREMENTS:
+
+* Dark cyberpunk theme
+* Blue/purple gradients
+* Glassmorphism cards
+* Smooth Framer Motion animations
+* Interactive charts
+* Professional SaaS layout
+* Mobile responsive
+* Sidebar navigation
+* Loading skeletons
+* Toast notifications
+
+DATABASE TABLES:
+users
+competitors
+snapshots
+alerts
+notifications
+subscriptions
+teams
+scrape_logs
+reports
+
+PAGES:
+Landing Page
+Login
+Signup
+Dashboard
+Competitor Details
+Reports
+Settings
+Admin Panel
+Developer Console
+
+EXTRAS:
+
+* Docker support
+* Environment configuration
+* API documentation
+* Clean folder structure
+* Reusable components
+* Production-ready code
+* Secure backend practices
+* Error handling
+* Rate limiting
+* Input validation
+* REST APIs
+
+Generate complete frontend and backend code with folder structure and comments.
