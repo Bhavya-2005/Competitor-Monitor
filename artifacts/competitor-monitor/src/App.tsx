@@ -16,6 +16,11 @@ import Digests from "@/pages/digests";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
+import AIInsights from "@/pages/ai-insights";
+import AIChat from "@/pages/ai-chat";
+import ServiceCompare from "@/pages/service-compare";
+import Alerts from "@/pages/alerts";
+import Admin from "@/pages/admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -197,6 +202,11 @@ function AppRouter() {
             <Route path="/checks" component={() => <ProtectedRoute component={Checks} />} />
             <Route path="/digests" component={() => <ProtectedRoute component={Digests} />} />
             <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
+            <Route path="/ai-insights" component={() => <ProtectedRoute component={AIInsights} />} />
+            <Route path="/ai-chat" component={() => <ProtectedRoute component={AIChat} />} />
+            <Route path="/service-compare" component={() => <ProtectedRoute component={ServiceCompare} />} />
+            <Route path="/alerts" component={() => <ProtectedRoute component={Alerts} />} />
+            <Route path="/admin" component={() => <ProtectedRoute component={Admin} />} />
             <Route component={NotFound} />
           </Switch>
           <Toaster />

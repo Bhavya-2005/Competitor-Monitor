@@ -6,6 +6,7 @@ import digestsRouter from "./digests";
 import dashboardRouter from "./dashboard";
 import settingsRouter from "./settings";
 import usersRouter from "./users";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(checksRouter);
 router.use(digestsRouter);
 router.use(dashboardRouter);
 router.use(settingsRouter);
+router.use(aiRouter);
 
 export default router;

@@ -1,0 +1,322 @@
+Upgrade my existing AI competitor monitoring platform “Overwatch” into a more advanced enterprise-grade AI intelligence platform.
+
+IMPORTANT:
+Do NOT rebuild the project from scratch.
+Keep the existing UI theme, layout, sidebar, branding, dark futuristic design, and current functionality.
+Extend the current application with powerful new features and improved UX/UI.
+
+CURRENT FEATURES ALREADY EXIST:
+
+* Dashboard
+* Competitors page
+* All Checks page
+* Digests page
+* Slack dispatch reports
+* Monitoring system
+* Intelligence reports
+
+NOW ADD THESE ADVANCED FEATURES:
+
+========================
+
+1. LIVE PRODUCT PRICE COMPARISON
+   ========================
+   Add a new sidebar section:
+
+* “Price Intelligence”
+
+Allow users to:
+
+* Search products
+* Compare live prices across:
+
+  * Amazon
+  * Flipkart
+  * Walmart
+  * Best Buy
+  * Myntra
+  * Ajio
+  * Apple Store
+  * Reliance Digital
+
+Use REAL LIVE DATA APIs and scraping pipelines.
+
+For each product compare:
+
+* Current price
+* Historical pricing graph
+* Discounts
+* Delivery speed
+* Seller ratings
+* Return policy
+* Warranty
+* EMI options
+* Product ratings
+
+Add:
+
+* “Best Value” AI badge
+* “Cheapest”
+* “Fastest Delivery”
+* “Most Trusted”
+
+========================
+2. SERVICE COMPARISON ENGINE
+============================
+
+Create a feature where users can compare:
+
+* SaaS products
+* AI tools
+* Hosting providers
+* OTT platforms
+* Food delivery apps
+* Banking apps
+* Cloud providers
+
+Compare:
+
+* Features
+* Pricing
+* AI sentiment
+* User reviews
+* Support quality
+* Reliability
+* Security score
+
+Generate AI recommendations automatically.
+
+========================
+3. AI INSIGHTS PANEL
+====================
+
+Add an AI-powered insights widget on dashboard.
+
+Show:
+
+* Competitor trend analysis
+* Market opportunity detection
+* AI-generated SWOT analysis
+* Revenue estimation
+* Predicted pricing changes
+* Threat level score
+
+Use animated cards and charts.
+
+========================
+4. REAL-TIME ALERT CENTER
+=========================
+
+Create a live alert system.
+
+Notify users instantly when:
+
+* Prices change
+* Competitor launches feature
+* Website redesign detected
+* Negative reviews spike
+* Product goes out of stock
+* Traffic spikes occur
+
+Add:
+
+* Toast notifications
+* Notification dropdown
+* Telegram alerts
+* Discord alerts
+* Browser push notifications
+
+========================
+5. ADVANCED VISUAL ANALYTICS
+============================
+
+Add:
+
+* Heatmaps
+* Interactive charts
+* Competitor ranking graphs
+* Trend lines
+* Historical comparisons
+* AI forecast graphs
+
+Use:
+
+* Recharts
+* Framer Motion animations
+
+========================
+6. AI CHAT ASSISTANT
+====================
+
+Add an AI assistant panel.
+
+Users can ask:
+
+* “Which competitor is growing fastest?”
+* “Which platform has best iPhone pricing?”
+* “What changed this week?”
+* “Which service has best reviews?”
+
+AI should generate:
+
+* Reports
+* Summaries
+* Recommendations
+* Charts
+
+========================
+7. SMART DIGESTS PAGE
+=====================
+
+Improve current Digests page.
+
+Add:
+
+* Expandable AI summaries
+* Visual comparison cards
+* Competitor logos
+* Severity levels
+* AI-generated recommendations
+* Change categorization
+* Export to PDF
+* Export to Excel
+
+========================
+8. TEAM COLLABORATION
+=====================
+
+Add:
+
+* Team workspaces
+* Shared reports
+* Comments
+* Mentions
+* Role permissions
+* Activity logs
+
+========================
+9. ADMIN PANEL
+==============
+
+Add admin-only section:
+
+* Manage users
+* View scraping jobs
+* API usage analytics
+* Billing analytics
+* Error monitoring
+* Subscription management
+
+========================
+10. SUBSCRIPTION SYSTEM
+=======================
+
+Add:
+
+* Free
+* Pro
+* Enterprise plans
+
+Integrate:
+
+* Stripe
+* Razorpay
+
+Add usage limits and premium features.
+
+========================
+11. UI/UX IMPROVEMENTS
+======================
+
+Keep existing futuristic dark theme.
+
+Improve with:
+
+* Glassmorphism
+* Better hover animations
+* Smooth transitions
+* Skeleton loaders
+* Modern tables
+* Better spacing
+* Animated charts
+* Mobile responsiveness
+* Better typography
+
+Make UI look like:
+
+* Linear
+* Vercel
+* Stripe
+* Notion AI
+* Apple-level premium
+
+========================
+12. TECH IMPROVEMENTS
+=====================
+
+Optimize:
+
+* Database queries
+* API caching
+* Background jobs
+* Queue system
+* WebSockets
+* Rate limiting
+* Error handling
+
+Use:
+
+* Redis
+* BullMQ
+* Prisma
+* PostgreSQL
+
+========================
+13. REAL DATA ONLY
+==================
+
+Do NOT use fake/static data.
+
+Use:
+
+* SerpAPI
+* BrightData
+* Apify
+* ScrapingBee
+* Diffbot
+* OpenAI/Gemini APIs
+
+========================
+14. NEW DASHBOARD SECTIONS
+==========================
+
+Add:
+
+* Market Intelligence
+* AI Reports
+* Product Comparison
+* Service Comparison
+* Alerts Center
+* Trend Forecasting
+
+========================
+15. PERFORMANCE & SECURITY
+==========================
+
+Add:
+
+* JWT auth
+* Role-based permissions
+* Secure API architecture
+* Audit logs
+* Encryption
+* API protection
+* Scalable backend structure
+
+========================
+16. FINAL REQUIREMENT
+=====================
+
+Everything should integrate into the EXISTING Overwatch project.
+Maintain current design language and branding.
+Enhance the app into a real-world investor-ready AI SaaS platform.

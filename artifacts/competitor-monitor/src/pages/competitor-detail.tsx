@@ -27,12 +27,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
-  Body,
-  Cell,
-  Head,
-  Header,
-  Row,
-} from "@/components/ui/table"; // Assuming standard table components if any, wait, using basic HTML table with tailwind is safer.
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function CompetitorDetail() {
   const params = useParams();
