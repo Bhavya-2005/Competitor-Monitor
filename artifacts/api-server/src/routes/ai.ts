@@ -11,29 +11,23 @@ const MODEL = "deepseek/deepseek-chat";
 
 async function callAI(
   prompt: string,
-  maxTokens = 800,
-  jsonMode = false
+  maxTokens = 800
 ): Promise<string | null> {
   const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const body: Record<string, unknown> = {
-      model: MODEL,
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: maxTokens,
-    };
-    if (jsonMode) {
-      body.response_format = { type: "json_object" };
-    }
-
     const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: maxTokens,
+      }),
       signal: AbortSignal.timeout(30000),
     });
 
@@ -118,32 +112,20 @@ router.post("/ai/insights", requireAuth, async (req, res) => {
     const featureChanges = recentChecks.filter((c) => c.changeType === "features").length;
     const jobChanges = recentChecks.filter((c) => c.changeType === "jobs").length;
 
-    const prompt = `You are a senior competitive intelligence analyst. Analyze this competitor monitoring data and return a JSON object.
+    const prompt = `You are a senior competitive intelligence analyst.
 
-Monitored competitors: ${competitorNames || "None yet"}
-Total checks this week: ${recentChecks.length}
-Changes detected: ${totalChanges} (Pricing: ${pricingChanges}, Features: ${featureChanges}, Jobs: ${jobChanges})
-Recent changes:
-${changesWithSummary.slice(0, 15).join("\n") || "No changes detected yet"}
+IMPORTANT: Respond with raw JSON only. No markdown, no code fences, no explanation. Start your response with { and end with }.
 
-Return ONLY a valid JSON object with this exact structure:
-{
-  "threatLevel": <number 1-10>,
-  "threatLabel": <"Low"|"Medium"|"High"|"Critical">,
-  "marketOpportunity": <2-3 sentence string>,
-  "swot": {
-    "strengths": [<3 strings>],
-    "weaknesses": [<3 strings>],
-    "opportunities": [<3 strings>],
-    "threats": [<3 strings>]
-  },
-  "trendSummary": <2-3 sentence string>,
-  "predictedMoves": [<2-3 strings>],
-  "recommendations": [<3 strings>],
-  "competitorScores": [{"name": <string>, "activityScore": <1-10>, "threatScore": <1-10>}]
-}`;
+Data to analyze:
+- Monitored competitors: ${competitorNames || "None yet"}
+- Total checks this week: ${recentChecks.length}
+- Changes detected: ${totalChanges} (Pricing: ${pricingChanges}, Features: ${featureChanges}, Jobs: ${jobChanges})
+- Recent changes: ${changesWithSummary.slice(0, 15).join(" | ") || "No changes detected yet"}
 
-    const raw = await callAI(prompt, 1000, true);
+Required JSON structure (fill with real analysis):
+{"threatLevel":5,"threatLabel":"Medium","marketOpportunity":"...","swot":{"strengths":["...","...","..."],"weaknesses":["...","...","..."],"opportunities":["...","...","..."],"threats":["...","...","..."]},"trendSummary":"...","predictedMoves":["...","..."],"recommendations":["...","...","..."],"competitorScores":[{"name":"...","activityScore":7,"threatScore":6}]}`;
+
+    const raw = await callAI(prompt, 1000);
 
     if (!raw) {
       // Fallback mock when no API key or AI fails
@@ -280,39 +262,21 @@ router.post("/ai/compare", requireAuth, async (req, res) => {
       return;
     }
 
-    const prompt = `You are a SaaS product analyst. Compare these services: ${services.join(", ")}.
+    const serviceList = services.join(", ");
+    const prompt = `You are a SaaS product analyst. Compare these services: ${serviceList}.
 
-Return ONLY a valid JSON object with this exact structure:
-{
-  "services": [
-    {
-      "name": <string>,
-      "category": <string>,
-      "tagline": <string>,
-      "pricingModel": <string>,
-      "freeTier": <boolean>,
-      "keyFeatures": [<5 strings>],
-      "proscons": { "pros": [<3 strings>], "cons": [<3 strings>] },
-      "targetAudience": <string>,
-      "aiSentiment": <"Positive"|"Mixed"|"Negative">,
-      "reliabilityScore": <1-10>,
-      "valueScore": <1-10>,
-      "easeOfUse": <1-10>,
-      "supportQuality": <1-10>,
-      "marketPosition": <"Leader"|"Challenger"|"Niche"|"Emerging">
-    }
-  ],
-  "winner": { "overall": <string>, "bestValue": <string>, "easiest": <string>, "mostFeatures": <string> },
-  "recommendation": <2-3 sentence string>,
-  "comparisonTable": [{ "feature": <string>, "values": { <serviceName>: <string> } }]
-}`;
+IMPORTANT: Respond with raw JSON only. No markdown, no code fences, no explanation. Start your response with { and end with }.
 
-    const raw = await callAI(prompt, 1400, true);
+Required JSON structure:
+{"services":[{"name":"...","category":"...","tagline":"...","pricingModel":"...","freeTier":true,"keyFeatures":["...","...","...","...","..."],"proscons":{"pros":["...","...","..."],"cons":["...","...","..."]},"targetAudience":"...","aiSentiment":"Positive","reliabilityScore":8,"valueScore":7,"easeOfUse":9,"supportQuality":7,"marketPosition":"Leader"}],"winner":{"overall":"...","bestValue":"...","easiest":"...","mostFeatures":"..."},"recommendation":"...","comparisonTable":[{"feature":"...","values":{"ServiceName":"..."}}]}
+
+Fill in real data for: ${serviceList}. Include all ${services.length} services. Include at least 5 rows in comparisonTable.`;
+
+    const raw = await callAI(prompt, 1600);
 
     if (!raw) {
       res.status(503).json({
-        error:
-          "AI service unavailable. Set OPENROUTER_API_KEY on the server to enable comparisons.",
+        error: "AI comparison failed. Please try again in a moment.",
       });
       return;
     }
