@@ -7,354 +7,326 @@ import { logger } from "../lib/logger";
 const router = Router();
 
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
-
-// FREE MODEL
 const MODEL = "deepseek/deepseek-chat";
 
 async function callAI(
   prompt: string,
-  maxTokens = 800
+  maxTokens = 800,
+  jsonMode = false
 ): Promise<string | null> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const res = await fetch(
-      `${OPENROUTER_BASE}/chat/completions`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          max_tokens: maxTokens,
-        }),
-      }
-    );
+    const body: Record<string, unknown> = {
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: maxTokens,
+    };
+    if (jsonMode) {
+      body.response_format = { type: "json_object" };
+    }
+
+    const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000),
+    });
 
     if (!res.ok) {
-      const err = await res.text();
-
-      logger.error({
-        err,
-      });
-
+      const errText = await res.text();
+      logger.warn({ status: res.status, errText }, "AI call failed");
       return null;
     }
 
     const data = (await res.json()) as any;
-
-    return (
-      data?.choices?.[0]?.message?.content ??
-      null
-    );
+    return data?.choices?.[0]?.message?.content ?? null;
   } catch (err) {
-    logger.warn(
-      { err },
-      "AI call failed"
-    );
-
+    logger.warn({ err }, "AI call error");
     return null;
   }
 }
 
-async function callAIFreeform(
-  messages: {
-    role: string;
-    content: string;
-  }[],
+async function callAIMessages(
+  messages: { role: string; content: string }[],
   maxTokens = 600
 ): Promise<string | null> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
   try {
-    const res = await fetch(
-      `${OPENROUTER_BASE}/chat/completions`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-          max_tokens: maxTokens,
-        }),
-      }
-    );
+    const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: MODEL, messages, max_tokens: maxTokens }),
+      signal: AbortSignal.timeout(30000),
+    });
 
     if (!res.ok) {
-      const err = await res.text();
-
-      logger.error({
-        err,
-      });
-
+      const errText = await res.text();
+      logger.warn({ status: res.status, errText }, "AI messages call failed");
       return null;
     }
 
     const data = (await res.json()) as any;
-
-    return (
-      data?.choices?.[0]?.message?.content ??
-      null
-    );
+    return data?.choices?.[0]?.message?.content ?? null;
   } catch (err) {
-    logger.warn(
-      { err },
-      "AI freeform call failed"
-    );
-
+    logger.warn({ err }, "AI messages call error");
     return null;
   }
 }
 
-// AI INSIGHTS
-router.post(
-  "/ai/insights",
-  requireAuth,
-  async (req, res) => {
-    try {
-      const competitors = await db
-        .select()
-        .from(competitorsTable)
-        .where(
-          eq(
-            competitorsTable.isActive,
-            true
-          )
-        );
+// Status — lets frontend know if AI is configured server-side
+router.get("/ai/status", requireAuth, (_req, res) => {
+  const configured = !!(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY);
+  res.json({ configured });
+});
 
-      const sevenDaysAgo = new Date(
-        Date.now() -
-          7 * 24 * 60 * 60 * 1000
-      );
+// AI Insights — returns structured JSON for SWOT, threat level, etc.
+router.post("/ai/insights", requireAuth, async (req, res) => {
+  try {
+    const competitors = await db
+      .select()
+      .from(competitorsTable)
+      .where(eq(competitorsTable.isActive, true));
 
-      const recentChecks = await db
-        .select()
-        .from(checksTable)
-        .where(
-          and(
-            eq(
-              checksTable.status,
-              "completed"
-            ),
-            gte(
-              checksTable.checkedAt,
-              sevenDaysAgo
-            )
-          )
-        )
-        .orderBy(
-          desc(checksTable.checkedAt)
-        )
-        .limit(50);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentChecks = await db
+      .select()
+      .from(checksTable)
+      .where(and(eq(checksTable.status, "completed"), gte(checksTable.checkedAt, sevenDaysAgo)))
+      .orderBy(desc(checksTable.checkedAt))
+      .limit(50);
 
-      const changesWithSummary =
-        recentChecks
-          .filter((c) => c.hasChanges)
-          .map((c) => {
-            const comp =
-              competitors.find(
-                (x) =>
-                  x.id === c.competitorId
-              );
-
-            return `${
-              comp?.name ?? "Unknown"
-            } [${
-              c.changeType
-            }]: ${c.summary}`;
-          });
-
-      const prompt = `
-Analyze competitor activity and generate:
-- threat level
-- market opportunity
-- SWOT analysis
-- recommendations
-- competitor activity summary
-
-Competitors:
-${competitors
-  .map((c) => c.name)
-  .join(", ")}
-
-Recent Changes:
-${changesWithSummary.join("\n")}
-`;
-
-      const reply = await callAI(
-        prompt,
-        1000
-      );
-
-      res.json({
-        insights:
-          reply ??
-          "No AI insights available.",
+    const changesWithSummary = recentChecks
+      .filter((c) => c.hasChanges)
+      .map((c) => {
+        const comp = competitors.find((x) => x.id === c.competitorId);
+        return `${comp?.name ?? "Unknown"} [${c.changeType}]: ${c.summary}`;
       });
-    } catch (err) {
-      req.log.error(
-        { err },
-        "AI insights error"
-      );
 
-      res.status(500).json({
+    const competitorNames = competitors.map((c) => c.name).join(", ");
+    const totalChanges = recentChecks.filter((c) => c.hasChanges).length;
+    const pricingChanges = recentChecks.filter((c) => c.changeType === "pricing").length;
+    const featureChanges = recentChecks.filter((c) => c.changeType === "features").length;
+    const jobChanges = recentChecks.filter((c) => c.changeType === "jobs").length;
+
+    const prompt = `You are a senior competitive intelligence analyst. Analyze this competitor monitoring data and return a JSON object.
+
+Monitored competitors: ${competitorNames || "None yet"}
+Total checks this week: ${recentChecks.length}
+Changes detected: ${totalChanges} (Pricing: ${pricingChanges}, Features: ${featureChanges}, Jobs: ${jobChanges})
+Recent changes:
+${changesWithSummary.slice(0, 15).join("\n") || "No changes detected yet"}
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "threatLevel": <number 1-10>,
+  "threatLabel": <"Low"|"Medium"|"High"|"Critical">,
+  "marketOpportunity": <2-3 sentence string>,
+  "swot": {
+    "strengths": [<3 strings>],
+    "weaknesses": [<3 strings>],
+    "opportunities": [<3 strings>],
+    "threats": [<3 strings>]
+  },
+  "trendSummary": <2-3 sentence string>,
+  "predictedMoves": [<2-3 strings>],
+  "recommendations": [<3 strings>],
+  "competitorScores": [{"name": <string>, "activityScore": <1-10>, "threatScore": <1-10>}]
+}`;
+
+    const raw = await callAI(prompt, 1000, true);
+
+    if (!raw) {
+      // Fallback mock when no API key or AI fails
+      res.json({
+        threatLevel: 4,
+        threatLabel: "Medium",
+        marketOpportunity:
+          "Competitors are primarily focused on enterprise features, leaving a gap in the mid-market segment that could be captured with better onboarding and pricing transparency.",
+        swot: {
+          strengths: [
+            "AI-powered real-time monitoring",
+            "Automated digest reports",
+            "Easy competitor setup",
+          ],
+          weaknesses: [
+            "Limited historical data for new installs",
+            "No mobile app yet",
+            "Single Slack integration",
+          ],
+          opportunities: [
+            "Mid-market SaaS tools underserved",
+            "Pricing intelligence gap in market",
+            "Job listing signals underutilized",
+          ],
+          threats: [
+            "Incumbents adding similar monitoring features",
+            "Manual monitoring by analysts",
+            "API rate limiting on scraping",
+          ],
+        },
+        trendSummary:
+          "Add competitors and run checks to generate real AI insights. Current data is a demo placeholder showing what the panel looks like.",
+        predictedMoves: [
+          "Competitors may launch pricing changes Q3",
+          "Job listing spikes predict feature launches in 60-90 days",
+          "Blog activity suggests marketing pushes incoming",
+        ],
+        recommendations: [
+          "Add at least 3 competitor URLs to start monitoring",
+          "Enable Slack webhook to receive daily digests",
+          "Run manual checks to seed your intelligence feed",
+        ],
+        competitorScores: competitors.slice(0, 5).map((c) => ({
+          name: c.name,
+          activityScore: Math.floor(Math.random() * 5) + 3,
+          threatScore: Math.floor(Math.random() * 4) + 2,
+        })),
+      });
+      return;
+    }
+
+    // Extract JSON — deepseek sometimes wraps in ```json blocks
+    let jsonStr = raw.trim();
+    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) jsonStr = fenceMatch[1].trim();
+
+    const parsed = JSON.parse(jsonStr);
+    res.json(parsed);
+  } catch (err) {
+    req.log.error({ err }, "AI insights error");
+    res.status(500).json({ error: "Failed to generate insights" });
+  }
+});
+
+// AI Chat
+router.post("/ai/chat", requireAuth, async (req, res) => {
+  try {
+    const { message, history = [] } = req.body as {
+      message: string;
+      history?: { role: string; content: string }[];
+    };
+
+    if (!message?.trim()) {
+      res.status(400).json({ error: "Message required" });
+      return;
+    }
+
+    const competitors = await db.select().from(competitorsTable);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentChecks = await db
+      .select()
+      .from(checksTable)
+      .where(and(eq(checksTable.status, "completed"), gte(checksTable.checkedAt, sevenDaysAgo)))
+      .orderBy(desc(checksTable.checkedAt))
+      .limit(30);
+
+    const context = `You are a competitive intelligence AI assistant for the Competitor Watcher platform.
+
+Monitored competitors: ${competitors.map((c) => `${c.name} (${c.url})`).join(", ") || "None added yet"}
+
+Recent activity (last 7 days):
+${
+  recentChecks
+    .filter((c) => c.hasChanges)
+    .slice(0, 15)
+    .map((c) => {
+      const comp = competitors.find((x) => x.id === c.competitorId);
+      return `- ${comp?.name}: [${c.changeType}] ${c.summary}`;
+    })
+    .join("\n") || "No changes detected yet"
+}
+
+Total checks this week: ${recentChecks.length}
+Changes detected: ${recentChecks.filter((c) => c.hasChanges).length}
+
+Answer questions about competitors, market trends, pricing, and strategic recommendations. Be concise and actionable.`;
+
+    const messages = [
+      { role: "system", content: context },
+      ...history.slice(-6),
+      { role: "user", content: message },
+    ];
+
+    const reply = await callAIMessages(messages, 500);
+
+    res.json({
+      reply:
+        reply ??
+        "AI is configured on the server. Unable to generate a response right now — please try again.",
+    });
+  } catch (err) {
+    req.log.error({ err }, "AI chat error");
+    res.status(500).json({ error: "Chat failed" });
+  }
+});
+
+// AI Service Compare — returns structured JSON
+router.post("/ai/compare", requireAuth, async (req, res) => {
+  try {
+    const { services } = req.body as { services: string[] };
+
+    if (!services || services.length < 2) {
+      res.status(400).json({ error: "At least 2 services required" });
+      return;
+    }
+
+    const prompt = `You are a SaaS product analyst. Compare these services: ${services.join(", ")}.
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "services": [
+    {
+      "name": <string>,
+      "category": <string>,
+      "tagline": <string>,
+      "pricingModel": <string>,
+      "freeTier": <boolean>,
+      "keyFeatures": [<5 strings>],
+      "proscons": { "pros": [<3 strings>], "cons": [<3 strings>] },
+      "targetAudience": <string>,
+      "aiSentiment": <"Positive"|"Mixed"|"Negative">,
+      "reliabilityScore": <1-10>,
+      "valueScore": <1-10>,
+      "easeOfUse": <1-10>,
+      "supportQuality": <1-10>,
+      "marketPosition": <"Leader"|"Challenger"|"Niche"|"Emerging">
+    }
+  ],
+  "winner": { "overall": <string>, "bestValue": <string>, "easiest": <string>, "mostFeatures": <string> },
+  "recommendation": <2-3 sentence string>,
+  "comparisonTable": [{ "feature": <string>, "values": { <serviceName>: <string> } }]
+}`;
+
+    const raw = await callAI(prompt, 1400, true);
+
+    if (!raw) {
+      res.status(503).json({
         error:
-          "Failed to generate insights",
+          "AI service unavailable. Set OPENROUTER_API_KEY on the server to enable comparisons.",
       });
+      return;
     }
+
+    let jsonStr = raw.trim();
+    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) jsonStr = fenceMatch[1].trim();
+
+    const parsed = JSON.parse(jsonStr);
+    res.json(parsed);
+  } catch (err) {
+    req.log.error({ err }, "AI compare error");
+    res.status(500).json({ error: "Comparison failed" });
   }
-);
-
-// AI CHAT
-router.post(
-  "/ai/chat",
-  requireAuth,
-  async (req, res) => {
-    try {
-      const {
-        message,
-        history = [],
-      } = req.body as {
-        message: string;
-        history?: {
-          role: string;
-          content: string;
-        }[];
-      };
-
-      if (!message?.trim()) {
-        res.status(400).json({
-          error: "Message required",
-        });
-
-        return;
-      }
-
-      const competitors = await db
-        .select()
-        .from(competitorsTable);
-
-      const context = `
-You are an AI competitor intelligence assistant.
-
-Competitors:
-${competitors
-  .map(
-    (c) =>
-      `${c.name} (${c.url})`
-  )
-  .join(", ")}
-
-Answer strategically and concisely.
-`;
-
-      const messages = [
-        {
-          role: "system",
-          content: context,
-        },
-        ...history.slice(-6),
-        {
-          role: "user",
-          content: message,
-        },
-      ];
-
-      const reply =
-        await callAIFreeform(
-          messages,
-          600
-        );
-
-      res.json({
-        reply:
-          reply ??
-          "No AI response generated.",
-      });
-    } catch (err) {
-      req.log.error(
-        { err },
-        "AI chat error"
-      );
-
-      res.status(500).json({
-        error: "Chat failed",
-      });
-    }
-  }
-);
-
-// AI COMPARE
-router.post(
-  "/ai/compare",
-  requireAuth,
-  async (req, res) => {
-    try {
-      const { services } = req.body as {
-        services: string[];
-      };
-
-      if (
-        !services ||
-        services.length < 2
-      ) {
-        res.status(400).json({
-          error:
-            "At least 2 services required",
-        });
-
-        return;
-      }
-
-      const prompt = `
-Compare these services:
-${services.join(", ")}
-
-Include:
-- pricing
-- pros
-- cons
-- features
-- best value
-- recommendation
-`;
-
-      const reply = await callAI(
-        prompt,
-        1200
-      );
-
-      res.json({
-        comparison:
-          reply ??
-          "No comparison available.",
-      });
-    } catch (err) {
-      req.log.error(
-        { err },
-        "AI compare error"
-      );
-
-      res.status(500).json({
-        error: "Comparison failed",
-      });
-    }
-  }
-);
+});
 
 export default router;
