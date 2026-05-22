@@ -15,7 +15,8 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 // Module-level configuration
 // ---------------------------------------------------------------------------
 
-let _baseUrl: string | null = null;
+let _baseUrl: string | null =
+  import.meta.env.VITE_API_URL || null;
 let _authTokenGetter: AuthTokenGetter | null = null;
 
 /**
