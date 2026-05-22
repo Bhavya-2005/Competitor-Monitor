@@ -88,7 +88,7 @@ export default function ServiceCompare() {
 
   const compare = useMutation({
     mutationFn: async (svcs: string[]) => {
-      const res = await fetch("/api/ai/compare", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ai/compare`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ services: svcs }),

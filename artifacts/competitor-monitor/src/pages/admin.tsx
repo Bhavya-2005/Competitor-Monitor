@@ -38,7 +38,7 @@ export default function Admin() {
   const { data: users, isLoading: loadingUsers } = useQuery<User[]>({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const res = await fetch("/api/users");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users`);
       if (!res.ok) throw new Error("Unauthorized");
       return res.json();
     },

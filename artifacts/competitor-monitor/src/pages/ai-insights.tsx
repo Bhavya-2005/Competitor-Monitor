@@ -55,7 +55,7 @@ export default function AIInsights() {
 
   const generate = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/ai/insights", { method: "POST", headers: { "Content-Type": "application/json" } });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ai/insights`, { method: "POST", headers: { "Content-Type": "application/json" } });
       if (!res.ok) throw new Error("Failed");
       return res.json() as Promise<InsightData>;
     },
